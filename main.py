@@ -58,7 +58,7 @@ def predict():
         dst_port = int(json_data.get("dst_port", -1))
         if dst_port == 22:
             logging.info("Port 22 detected — returning Benign without prediction.")
-            return jsonify({"ip":json_data.get("src_ip"),"prediction": 0, "label": "Benign (SSH)"})
+            return jsonify({"ip":json_data.get("dst_ip"),"prediction": 0, "label": "Benign (SSH)"})
 
         # Ekstrak fitur yang dibutuhkan
         extracted = {}
@@ -73,7 +73,7 @@ def predict():
         label = "Benign" if prediction == 0 else "Syn Attack"
 
         logging.info(f"Prediction result: {label} ({prediction})")
-        return jsonify({"ip":json_data.get("src_ip"),"prediction": int(prediction), "label": label})
+        return jsonify({"ip":json_data.get("dst_ip"),"prediction": int(prediction), "label": label})
 
     except Exception as e:
         logging.error(f"Error during prediction: {e}")
