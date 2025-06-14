@@ -65,15 +65,21 @@ def predict():
         ip_dst = json_data.get("dst_ip", "")
 
         # Jika IP TIDAK dalam whitelist, maka pengecekan port berlaku
-        if ip_src not in WHITELISTED_IPS and ip_dst not in WHITELISTED_IPS:
-            dst_port = int(json_data.get("dst_port", -1))
-            if dst_port in (22, 3000):
-                return jsonify({
-                    "ip": [ip_dst, ip_src],
-                    "prediction": 0,
-                    "label": "Benign (Ignored Port)"
-                })
-
+        if ip_src in WHITELISTED_IPS or ip_dst in WHITELISTED_IPS:
+            logging.info("Whitelisted IP detected — skipping prediction, marked as Benign.")
+            return jsonify({
+                "ip": [ip_dst, ip_src],
+                "prediction": 0,
+                "label": "Benign (Whitelisted IP)"
+            })
+        dst_port = int(json_data.get("dst_port", -1))
+        if dst_port in (22, 3000):
+            logging.info(f"Ignored port {dst_port} detected — returning Benign.")
+            return jsonify({
+                "ip": [ip_dst, ip_src],
+                "prediction": 0,
+                "label": "Benign (Ignored Port)"
+            })
         # Ekstrak fitur yang dibutuhkan
         extracted = {}
         for json_key, model_key in feature_mapping.items():
