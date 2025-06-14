@@ -2,6 +2,7 @@ from flask import Flask, request, jsonify
 import joblib
 import pandas as pd
 import logging
+WHITELISTED_IPS = {"54.255.64.173"}
 
 # Setup logging
 logging.basicConfig(
@@ -55,10 +56,23 @@ def predict():
         logging.info(f"Incoming data: {json_data}")
 
         # Cek port 22 untuk pengecualian manual
-        dst_port = int(json_data.get("dst_port", -1))
-        if dst_port == 22:
-            logging.info("Port 22 detected — returning Benign without prediction.")
-            return jsonify({"ip":[json_data.get("dst_ip"), json_data.get("src_ip")],"prediction": 0, "label": "Benign (SSH)"})
+        # dst_port = int(json_data.get("dst_port", -1))
+        # if dst_port == 22:
+        #     logging.info("Port 22 detected — returning Benign without prediction.")
+        #     return jsonify({"ip":[json_data.get("dst_ip"), json_data.get("src_ip")],"prediction": 0, "label": "Benign (SSH)"})
+
+        ip_src = json_data.get("src_ip", "")
+        ip_dst = json_data.get("dst_ip", "")
+
+        # Jika IP TIDAK dalam whitelist, maka pengecekan port berlaku
+        if ip_src not in WHITELISTED_IPS and ip_dst not in WHITELISTED_IPS:
+            dst_port = int(json_data.get("dst_port", -1))
+            if dst_port in (22, 3000):
+                return jsonify({
+                    "ip": [ip_dst, ip_src],
+                    "prediction": 0,
+                    "label": "Benign (Ignored Port)"
+                })
 
         # Ekstrak fitur yang dibutuhkan
         extracted = {}
